@@ -1,1 +1,157 @@
-Flashcards de Español - Ele de Luis
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards de Español</title>
+  <style>
+    :root {
+      --brand-orange: #ff7043;
+      --brand-turquoise: #00acc1;
+      --bg-light: #f4f6f8;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      border-top: 8px solid var(--brand-turquoise);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 300px;
+      padding: 30px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .word-en {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 15px;
+    }
+    .word-es {
+      font-size: 24px;
+      color: var(--brand-orange);
+      font-weight: bold;
+      display: none;
+      margin-bottom: 15px;
+    }
+    .btn {
+      background-color: var(--brand-turquoise);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 14px;
+    }
+    .btn-orange {
+      background-color: var(--brand-orange);
+    }
+    .progress-bar {
+      width: 100%;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      height: 12px;
+      margin-bottom: 20px;
+    }
+    .progress-fill {
+      background-color: var(--brand-orange);
+      height: 100%;
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Flashcards de Español</h2>
+  
+  <div style="width: 300px;">
+    <small>Tu progreso:</small>
+    <div class="progress-bar">
+      <div id="progress" class="progress-fill"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="english-word" class="word-en">Cargando...</div>
+    <div id="spanish-word" class="word-es"></div>
+    
+    <button class="btn" onclick="toggleSpanish()">Ver en Español</button>
+    <button class="btn btn-orange" onclick="speakSpanish()">🔊 Pronunciación</button>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <button class="btn btn-orange" onclick="markLearned()">¡La sé! (Aprendida)</button>
+    <button class="btn" onclick="nextCard()">Siguiente</button>
+  </div>
+
+  <script>
+    const sheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTvO0lZb0-_bykZ-1vrwqJ9esp1U8xPYoaIsjFiSLpl3PTyE-mqvaW0alBhIv8HX_IFznHXC7_ORibf/pub?output=csv";
+    let words = [];
+    let currentIndex = 0;
+    let learnedCount = 0;
+
+    async function loadSheetData() {
+      const response = await fetch(sheetCsvUrl);
+      const data = await response.text();
+      const rows = data.split('\n').slice(1); // Omitir cabecera
+      
+      words = rows.map(row => {
+        const columns = row.split(',');
+        return { en: columns[0], es: columns[1] };
+      }).filter(w => w.en && w.es);
+
+      showCard();
+    }
+
+    function showCard() {
+      if (words.length === 0) return;
+      document.getElementById('english-word').innerText = words[currentIndex].en.trim();
+      document.getElementById('spanish-word').innerText = words[currentIndex].es.trim();
+      document.getElementById('spanish-word').style.display = 'none';
+      updateProgress();
+    }
+
+    function toggleSpanish() {
+      const el = document.getElementById('spanish-word');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function speakSpanish() {
+      const text = words[currentIndex].es.trim();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function markLearned() {
+      learnedCount++;
+      nextCard();
+    }
+
+    function nextCard() {
+      if (currentIndex < words.length - 1) {
+        currentIndex++;
+      } else {
+        currentIndex = 0; // Reiniciar o ciclo
+      }
+      showCard();
+    }
+
+    function updateProgress() {
+      const percentage = (learnedCount / words.length) * 100;
+      document.getElementById('progress').style.width = Math.min(percentage, 100) + '%';
+    }
+
+    loadSheetData();
+  </script>
+</body>
+</html>
